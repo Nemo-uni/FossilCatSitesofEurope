@@ -102,7 +102,52 @@ def load_data() -> pd.DataFrame:
     return df
 
 
+def parse_age(age_value: str) -> float | None:
+    if not isinstance(age_value, str):
+        return None
+    age_str = age_value.strip().replace(",", ".")
+    match = re.search(r"([0-9]+(?:\.[0-9]+)?)", age_str)
+    if not match:
+        return None
+    try:
+        return float(match.group(1))
+    except ValueError:
+        return None
+
+
+def age_range_label_to_bounds(label: str) -> tuple[float, float] | None:
+    if label == "All ages":
+        return None
+    parts = label.split("-")
+    if len(parts) != 2:
+        return None
+    try:
+        low = float(parts[0].replace(",", "."))
+        high = float(parts[1].split()[0].replace(",", "."))
+        return low, high
+    except ValueError:
+        return None
+
+
 df = load_data()
+df["age_ma"] = df["Age"].apply(parse_age)
+
+age_options = [
+    "All ages",
+    "0,00-0,99 Ma",
+    "1,00-1,99 Ma",
+    "2,00-2,99 Ma",
+    "3,00-3,99 Ma",
+    "4,00-4,99 Ma",
+    "5,00-5,99 Ma",
+    "6,00-6,99 Ma",
+]
+selected_age = st.selectbox("Filter by age range:", age_options, index=0)
+range_bounds = age_range_label_to_bounds(selected_age)
+if range_bounds is not None:
+    low, high = range_bounds
+    df = df[df["age_ma"].between(low, high, inclusive="both")]
+
 missing = df[df["latitude"].isna()]
 
 st.subheader("Map of fossil cat sites")
@@ -141,7 +186,10 @@ if not plot_df.empty:
         data=plot_df,
         get_position="[longitude, latitude]",
         get_fill_color="[255, 110, 89, 180]",
-        get_radius=50000,
+        get_radius=8,
+        radius_units="pixels",
+        radius_min_pixels=4,
+        radius_max_pixels=12,
         pickable=True,
         auto_highlight=True,
     )

@@ -67,7 +67,23 @@ def get_country_centroid(location: str) -> tuple[float, float] | None:
 
 @st.cache_data
 def load_data() -> pd.DataFrame:
-    df = pd.read_excel("Fossil cats in europe.xlsx", engine="openpyxl")
+    csv_path = Path("Fossil cats in europe.csv")
+    excel_path = Path("Fossil cats in europe.xlsx")
+    if csv_path.exists():
+        df = pd.read_csv(csv_path)
+    elif excel_path.exists():
+        try:
+            df = pd.read_excel(excel_path, engine="openpyxl")
+        except ImportError as exc:
+            raise FileNotFoundError(
+                "Could not open the Excel workbook because openpyxl is not installed. "
+                "Please add 'Fossil cats in europe.csv' to the repo or install openpyxl."
+            ) from exc
+    else:
+        raise FileNotFoundError(
+            "Data file not found. Add 'Fossil cats in europe.csv' or 'Fossil cats in europe.xlsx' to the repo."
+        )
+
     df.columns = [col.strip() for col in df.columns]
     df["Location"] = df.get("Location", df.get("Location ", "")).astype(str)
 

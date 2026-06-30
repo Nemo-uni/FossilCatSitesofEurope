@@ -216,37 +216,35 @@ if not plot_df.empty:
         id="fossil-site-points",
         get_position="[longitude, latitude]",
         get_fill_color="[255, 110, 89, 180]",
-        get_radius=8,
+        get_radius=16,
         radius_units="pixels",
-        radius_min_pixels=4,
-        radius_max_pixels=12,
+        radius_min_pixels=8,
+        radius_max_pixels=24,
         pickable=True,
         auto_highlight=True,
     )
 
-    stored_selection = st.session_state.get("selected_point_data")
-    popup_layer = None
-    if stored_selection is not None:
-        species_lines = [line.strip() for line in str(stored_selection.get("Species", "")).split("<br/>") if line.strip()]
-        lines = [f"Location: {stored_selection.get('Location', 'Unknown')}", "Species:"]
+    def build_popup_layer(selected_point_data):
+        species_lines = [line.strip() for line in str(selected_point_data.get("Species", "")).split("<br/>") if line.strip()]
+        lines = [f"Location: {selected_point_data.get('Location', 'Unknown')}", "Species:"]
         lines += [f"- {line}" for line in species_lines]
-        lines.append(f"Age: {stored_selection.get('Age', 'Unknown')}")
+        lines.append(f"Age: {selected_point_data.get('Age', 'Unknown')}")
 
-        base_latitude = stored_selection.get("latitude", 0.0)
+        base_latitude = selected_point_data.get("latitude", 0.0)
         line_spacing = 0.00035
-        selected_point_data = []
+        selected_point_data_rows = []
         for index, text_line in enumerate(lines):
-            selected_point_data.append(
+            selected_point_data_rows.append(
                 {
-                    "longitude": stored_selection.get("longitude"),
+                    "longitude": selected_point_data.get("longitude"),
                     "latitude": base_latitude + line_spacing * (len(lines) - index),
                     "popup_text": text_line,
                 }
             )
 
-        popup_layer = pdk.Layer(
+        return pdk.Layer(
             "TextLayer",
-            data=selected_point_data,
+            data=selected_point_data_rows,
             id="fossil-site-popup",
             get_position="[longitude, latitude]",
             get_text="popup_text",
@@ -257,8 +255,10 @@ if not plot_df.empty:
             get_alignment_baseline="bottom",
         )
 
+    stored_selection = st.session_state.get("selected_point_data")
     layers = [layer]
-    if popup_layer is not None:
+    if stored_selection is not None:
+        popup_layer = build_popup_layer(stored_selection)
         layers.append(popup_layer)
 
     deck = pdk.Deck(
@@ -282,6 +282,15 @@ if not plot_df.empty:
                     "latitude": selected_point.get("Latitude", selected_point.get("latitude")),
                 }
                 break
+
+    if st.session_state.get("selected_point_data") is not None:
+        selected_point_data = st.session_state["selected_point_data"]
+        st.markdown("#### Selected location details")
+        st.write("**Location:**", selected_point_data.get("Location", "Unknown"))
+        st.write("**Species:**")
+        for line in [line.strip() for line in str(selected_point_data.get("Species", "")).split("<br/>") if line.strip()]:
+            st.write(f"- {line}")
+        st.write("**Age:**", selected_point_data.get("Age", "Unknown"))
 else:
     view_state = pdk.ViewState(
         latitude=50,

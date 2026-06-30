@@ -228,7 +228,23 @@ if not plot_df.empty:
         initial_view_state=view_state,
         tooltip=tooltip,
     )
-    st.pydeck_chart(deck)
+    event = st.pydeck_chart(deck, on_select="rerun", key="map_chart")
+
+    selected_point = None
+    if event is not None and getattr(event, "selection", None) is not None:
+        selection = event.selection
+        objects = selection.get("objects", {}) if isinstance(selection, dict) else {}
+        for object_list in objects.values():
+            if object_list:
+                selected_point = object_list[0]
+                break
+
+    if selected_point:
+        st.info(
+            f"**Clicked location:** {selected_point.get('Location', 'Unknown')}\n\n"
+            f"**Species:** {selected_point.get('Species', 'Unknown')}\n\n"
+            f"**Age:** {selected_point.get('Age', 'Unknown')}"
+        )
 else:
     view_state = pdk.ViewState(
         latitude=50,

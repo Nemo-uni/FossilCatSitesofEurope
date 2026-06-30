@@ -163,15 +163,15 @@ if "selected_species" not in st.session_state:
     st.session_state.selected_species = "All species"
 
 st.markdown("#### Filter by species")
-selected_species = st.selectbox(
-    "Species",
-    species_options,
-    index=species_options.index(st.session_state.selected_species)
-    if st.session_state.selected_species in species_options
-    else 0,
-    key="species_select",
-)
-st.session_state.selected_species = selected_species
+for i in range(0, len(species_options), 4):
+    row_options = species_options[i : i + 4]
+    cols = st.columns(len(row_options))
+    for label, col in zip(row_options, cols):
+        if col.button(label, key=f"species_btn_{label}"):
+            st.session_state.selected_species = label
+
+selected_species = st.session_state.selected_species
+st.markdown(f"**Selected species:** {selected_species}")
 
 if selected_species != "All species":
     df = df[df["Species"].astype(str).str.strip() == selected_species]

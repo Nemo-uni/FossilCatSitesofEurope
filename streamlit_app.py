@@ -213,6 +213,7 @@ if not plot_df.empty:
     layer = pdk.Layer(
         "ScatterplotLayer",
         data=plot_df,
+        id="fossil-site-points",
         get_position="[longitude, latitude]",
         get_fill_color="[255, 110, 89, 180]",
         get_radius=8,
@@ -223,34 +224,30 @@ if not plot_df.empty:
         auto_highlight=True,
     )
 
-    deck = pdk.Deck(
-        layers=[layer],
-        initial_view_state=view_state,
-        tooltip=tooltip,
-    )
-    event = st.pydeck_chart(deck, on_select="rerun", selection_mode="single-object", key="map_chart")
-
-    selected_point = None
-    if event is not None and getattr(event, "selection", None) is not None:
-        selection = event.selection
-        objects = selection.get("objects", {}) if isinstance(selection, dict) else {}
-        for object_list in objects.values():
-            if object_list:
-                selected_point = object_list[0]
-                break
-
+    stored_selection = st.session_state.get("selected_point_data")
     popup_layer = None
-    if selected_point:
-        species_lines = str(selected_point.get("Species", "")).split("<br/>")
-        popup_text = "Species:\n" + "\n".join(species_lines) + "\nAge: " + str(selected_point.get("Age", "Unknown"))
-        selected_point_data = [{
-            "longitude": selected_point.get("Longitude", selected_point.get("longitude")),
-            "latitude": selected_point.get("Latitude", selected_point.get("latitude")),
-            "popup_text": popup_text,
-        }]
+    if stored_selection is not None:
+        species_lines = [line.strip() for line in str(stored_selection.get("Species", "")).split("<br/>") if line.strip()]
+        lines = [f"Location: {stored_selection.get('Location', 'Unknown')}", "Species:"]
+        lines += [f"- {line}" for line in species_lines]
+        lines.append(f"Age: {stored_selection.get('Age', 'Unknown')}")
+
+        base_latitude = stored_selection.get("latitude", 0.0)
+        line_spacing = 0.00035
+        selected_point_data = []
+        for index, text_line in enumerate(lines):
+            selected_point_data.append(
+                {
+                    "longitude": stored_selection.get("longitude"),
+                    "latitude": base_latitude + line_spacing * (len(lines) - index),
+                    "popup_text": text_line,
+                }
+            )
+
         popup_layer = pdk.Layer(
             "TextLayer",
             data=selected_point_data,
+            id="fossil-site-popup",
             get_position="[longitude, latitude]",
             get_text="popup_text",
             get_size=16,
@@ -269,7 +266,25 @@ if not plot_df.empty:
         initial_view_state=view_state,
         tooltip=tooltip,
     )
-    st.pydeck_chart(deck, on_select="rerun", selection_mode="single-object", key="map_chart")
+    event = st.pydeck_chart(deck, on_select="rerun", selection_mode="single-object", key="map_chart")
+
+    if event is not None and getattr(event, "selection", None) is not None:
+        selection = event.selection
+        objects = selection.get("objects", {}) if isinstance(selection, dict) else {}
+        for object_list in objects.values():
+            if object_list:
+                selected_point = object_list[0]
+                new_selected_point_data = {
+                    "Location": selected_point.get("Location", "Unknown"),
+                    "Species": selected_point.get("Species", ""),
+                    "Age": selected_point.get("Age", "Unknown"),
+                    "longitude": selected_point.get("Longitude", selected_point.get("longitude")),
+                    "latitude": selected_point.get("Latitude", selected_point.get("latitude")),
+                }
+                if new_selected_point_data != st.session_state.get("selected_point_data"):
+                    st.session_state.selected_point_data = new_selected_point_data
+                    st.experimental_rerun()
+                break
 else:
     view_state = pdk.ViewState(
         latitude=50,

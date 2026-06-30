@@ -228,7 +228,7 @@ if not plot_df.empty:
         initial_view_state=view_state,
         tooltip=tooltip,
     )
-    event = st.pydeck_chart(deck, on_select="rerun", key="map_chart")
+    event = st.pydeck_chart(deck, on_select="rerun", selection_mode="single-object", key="map_chart")
 
     selected_point = None
     if event is not None and getattr(event, "selection", None) is not None:
@@ -239,12 +239,37 @@ if not plot_df.empty:
                 selected_point = object_list[0]
                 break
 
+    popup_layer = None
     if selected_point:
-        st.info(
-            f"**Clicked location:** {selected_point.get('Location', 'Unknown')}\n\n"
-            f"**Species:** {selected_point.get('Species', 'Unknown')}\n\n"
-            f"**Age:** {selected_point.get('Age', 'Unknown')}"
+        species_lines = str(selected_point.get("Species", "")).split("<br/>")
+        popup_text = "Species:\n" + "\n".join(species_lines) + "\nAge: " + str(selected_point.get("Age", "Unknown"))
+        selected_point_data = [{
+            "longitude": selected_point.get("Longitude", selected_point.get("longitude")),
+            "latitude": selected_point.get("Latitude", selected_point.get("latitude")),
+            "popup_text": popup_text,
+        }]
+        popup_layer = pdk.Layer(
+            "TextLayer",
+            data=selected_point_data,
+            get_position="[longitude, latitude]",
+            get_text="popup_text",
+            get_size=16,
+            size_units="pixels",
+            get_color="[0, 0, 0, 255]",
+            get_text_anchor="middle",
+            get_alignment_baseline="bottom",
         )
+
+    layers = [layer]
+    if popup_layer is not None:
+        layers.append(popup_layer)
+
+    deck = pdk.Deck(
+        layers=layers,
+        initial_view_state=view_state,
+        tooltip=tooltip,
+    )
+    st.pydeck_chart(deck, on_select="rerun", selection_mode="single-object", key="map_chart")
 else:
     view_state = pdk.ViewState(
         latitude=50,

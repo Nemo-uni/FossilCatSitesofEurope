@@ -274,16 +274,13 @@ if not plot_df.empty:
         for object_list in objects.values():
             if object_list:
                 selected_point = object_list[0]
-                new_selected_point_data = {
+                st.session_state.selected_point_data = {
                     "Location": selected_point.get("Location", "Unknown"),
                     "Species": selected_point.get("Species", ""),
                     "Age": selected_point.get("Age", "Unknown"),
                     "longitude": selected_point.get("Longitude", selected_point.get("longitude")),
                     "latitude": selected_point.get("Latitude", selected_point.get("latitude")),
                 }
-                if new_selected_point_data != st.session_state.get("selected_point_data"):
-                    st.session_state.selected_point_data = new_selected_point_data
-                    st.experimental_rerun()
                 break
 else:
     view_state = pdk.ViewState(

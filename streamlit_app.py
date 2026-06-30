@@ -3,13 +3,14 @@ import re
 from pathlib import Path
 
 import pandas as pd
+import pydeck as pdk
 import streamlit as st
 
 st.set_page_config(page_title="Fossil Cat Sites of Europe", layout="wide")
 st.title("🗺️ Fossil Cats in Europe")
 st.write(
     "This app loads the Excel workbook and plots approximate fossil site locations for every entry on a map. "
-    "Coordinates are loaded from a location lookup file and fallback to country centroids when needed."
+    "Hover a point to see the species and age information for that location."
 )
 
 COUNTRY_COORDS = {
@@ -105,8 +106,52 @@ df = load_data()
 missing = df[df["latitude"].isna()]
 
 st.subheader("Map of fossil cat sites")
-if df["latitude"].notna().any():
-    st.map(df.loc[df["latitude"].notna(), ["latitude", "longitude"]])
+plot_df = df[df["latitude"].notna()].copy()
+if not plot_df.empty:
+    plot_df = (
+        plot_df.groupby(["Location", "latitude", "longitude"], as_index=False)
+        .agg(
+            Species=("Species", lambda x: "<br/>".join(sorted(set(str(v).strip() for v in x if pd.notna(v))))),
+            Age=("Age", lambda x: "<br/>".join(sorted(set(str(v).strip() for v in x if pd.notna(v))))),
+        )
+    )
+    plot_df["tooltip"] = plot_df.apply(
+        lambda r: (
+            f"<b>Location:</b> {r.Location}<br/>"
+            f"<b>Species:</b> {r.Species}<br/>"
+            f"<b>Age:</b> {r.Age}"
+        ),
+        axis=1,
+    )
+
+    tooltip = {
+        "html": "{tooltip}",
+        "style": {"backgroundColor": "#333", "color": "white", "padding": "10px", "borderRadius": "5px"},
+    }
+
+    view_state = pdk.ViewState(
+        latitude=plot_df["latitude"].mean(),
+        longitude=plot_df["longitude"].mean(),
+        zoom=3,
+        pitch=0,
+    )
+
+    layer = pdk.Layer(
+        "ScatterplotLayer",
+        data=plot_df,
+        get_position="[longitude, latitude]",
+        get_fill_color="[255, 110, 89, 180]",
+        get_radius=50000,
+        pickable=True,
+        auto_highlight=True,
+    )
+
+    deck = pdk.Deck(
+        layers=[layer],
+        initial_view_state=view_state,
+        tooltip=tooltip,
+    )
+    st.pydeck_chart(deck)
 else:
     st.warning("No coordinates could be assigned from the workbook locations.")
 

@@ -230,6 +230,17 @@ if not plot_df.empty:
     )
     st.pydeck_chart(deck)
 else:
+    view_state = pdk.ViewState(
+        latitude=50,
+        longitude=10,
+        zoom=3,
+        pitch=0,
+    )
+    deck = pdk.Deck(
+        layers=[],
+        initial_view_state=view_state,
+    )
+    st.pydeck_chart(deck)
     st.warning("No coordinates could be assigned from the workbook locations.")
 
 st.markdown(

@@ -139,20 +139,42 @@ age_options = [
     "2,00-2,99 Ma",
     "3,00-3,99 Ma",
     "4,00-4,99 Ma",
-    "5,00-5,99 Ma",
-    "6,00-6,99 Ma",
 ]
 if "selected_age" not in st.session_state:
     st.session_state.selected_age = "All ages"
 
 st.markdown("#### Filter by age range")
-cols = st.columns(8)
+cols = st.columns(len(age_options))
 for label, col in zip(age_options, cols):
     if col.button(label, key=f"age_btn_{label}"):
         st.session_state.selected_age = label
 
 selected_age = st.session_state.selected_age
 st.markdown(f"**Selected range:** {selected_age}")
+
+species_options = ["All species"] + sorted(
+    set(
+        str(value).strip()
+        for value in df["Species"].dropna().unique()
+        if str(value).strip()
+    )
+)
+if "selected_species" not in st.session_state:
+    st.session_state.selected_species = "All species"
+
+st.markdown("#### Filter by species")
+selected_species = st.selectbox(
+    "Species",
+    species_options,
+    index=species_options.index(st.session_state.selected_species)
+    if st.session_state.selected_species in species_options
+    else 0,
+    key="species_select",
+)
+st.session_state.selected_species = selected_species
+
+if selected_species != "All species":
+    df = df[df["Species"].astype(str).str.strip() == selected_species]
 
 range_bounds = age_range_label_to_bounds(selected_age)
 if range_bounds is not None:
@@ -172,11 +194,7 @@ if not plot_df.empty:
         )
     )
     plot_df["tooltip"] = plot_df.apply(
-        lambda r: (
-            f"<b>Location:</b> {r.Location}<br/>"
-            f"<b>Species:</b> {r.Species}<br/>"
-            f"<b>Age:</b> {r.Age}"
-        ),
+        lambda r: f"<b>Location:</b> {r.Location}",
         axis=1,
     )
 

@@ -142,7 +142,18 @@ age_options = [
     "5,00-5,99 Ma",
     "6,00-6,99 Ma",
 ]
-selected_age = st.selectbox("Filter by age range:", age_options, index=0)
+if "selected_age" not in st.session_state:
+    st.session_state.selected_age = "All ages"
+
+st.markdown("#### Filter by age range")
+cols = st.columns(8)
+for label, col in zip(age_options, cols):
+    if col.button(label, key=f"age_btn_{label}"):
+        st.session_state.selected_age = label
+
+selected_age = st.session_state.selected_age
+st.markdown(f"**Selected range:** {selected_age}")
+
 range_bounds = age_range_label_to_bounds(selected_age)
 if range_bounds is not None:
     low, high = range_bounds

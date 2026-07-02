@@ -15,8 +15,18 @@ st.markdown(
         background-color: #d9b38c;
         color: #000000;
     }
-    .stMarkdown, .stTextInput, .stSelectbox, .stButton, .stDataFrame, .stCaption, .stWarning, .stInfo {
+    .stMarkdown, .stTextInput, .stSelectbox, .stDataFrame, .stCaption, .stWarning, .stInfo {
         color: #000000;
+    }
+    .stButton > button {
+        background-color: #d9b38c;
+        color: #000000;
+        border: 1px solid #000000;
+    }
+    .stButton > button:hover {
+        background-color: #c79d6b;
+        color: #000000;
+        border: 1px solid #000000;
     }
     </style>
     """,

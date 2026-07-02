@@ -35,7 +35,13 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.title("🗺️ Fossil Cats in Europe")
+st.markdown(
+    '<h1 style="display:flex; align-items:center; gap:10px; margin-bottom:0;">'
+    '<img src="https://raw.githubusercontent.com/Nemo-uni/FossilCatSitesofEurope/main/Fossil%20cats.jpg" '
+    'alt="Fossil cats" width="48" height="48" style="border-radius:6px;">'
+    'Fossil Cats in Europe</h1>',
+    unsafe_allow_html=True,
+)
 st.write(
     "This app loads the Excel workbook and plots approximate fossil site locations for every entry on a map. "
     "Hover a point to see the species and age information for that location."

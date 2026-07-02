@@ -226,12 +226,16 @@ if not plot_df.empty:
 
     def build_popup_layer(selected_point_data):
         species_lines = [line.strip() for line in str(selected_point_data.get("Species", "")).split("<br/>") if line.strip()]
-        lines = [f"Location: {selected_point_data.get('Location', 'Unknown')}", "Species:"]
-        lines += [f"- {line}" for line in species_lines]
+        lines = [f"Location: {selected_point_data.get('Location', 'Unknown')}"]
+        if species_lines:
+            lines.append("Species:")
+            lines.extend([f"- {line}" for line in species_lines])
+        else:
+            lines.append("Species: Unknown")
         lines.append(f"Age: {selected_point_data.get('Age', 'Unknown')}")
 
         base_latitude = selected_point_data.get("latitude", 0.0)
-        line_spacing = 0.00035
+        line_spacing = 0.0004
         selected_point_data_rows = []
         for index, text_line in enumerate(lines):
             selected_point_data_rows.append(
@@ -250,9 +254,12 @@ if not plot_df.empty:
             get_text="popup_text",
             get_size=16,
             size_units="pixels",
-            get_color="[0, 0, 0, 255]",
+            get_color="[255, 255, 255, 255]",
             get_text_anchor="middle",
             get_alignment_baseline="bottom",
+            background=True,
+            get_background_color="[20, 20, 20, 220]",
+            get_background_padding="[6, 6]",
         )
 
     stored_selection = st.session_state.get("selected_point_data")
@@ -271,17 +278,25 @@ if not plot_df.empty:
     if event is not None and getattr(event, "selection", None) is not None:
         selection = event.selection
         objects = selection.get("objects", {}) if isinstance(selection, dict) else {}
-        for object_list in objects.values():
+        selected_point = None
+        for layer_id, object_list in objects.items():
+            if layer_id == "fossil-site-points" and object_list:
+                selected_point = object_list[0]
+                break
+
+        if selected_point is None and isinstance(selection, dict):
+            object_list = selection.get("object", [])
             if object_list:
                 selected_point = object_list[0]
-                st.session_state.selected_point_data = {
-                    "Location": selected_point.get("Location", "Unknown"),
-                    "Species": selected_point.get("Species", ""),
-                    "Age": selected_point.get("Age", "Unknown"),
-                    "longitude": selected_point.get("Longitude", selected_point.get("longitude")),
-                    "latitude": selected_point.get("Latitude", selected_point.get("latitude")),
-                }
-                break
+
+        if selected_point is not None:
+            st.session_state.selected_point_data = {
+                "Location": selected_point.get("Location", "Unknown"),
+                "Species": selected_point.get("Species", ""),
+                "Age": selected_point.get("Age", "Unknown"),
+                "longitude": selected_point.get("Longitude", selected_point.get("longitude")),
+                "latitude": selected_point.get("Latitude", selected_point.get("latitude")),
+            }
 
     if st.session_state.get("selected_point_data") is not None:
         selected_point_data = st.session_state["selected_point_data"]

@@ -71,8 +71,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 st.write(
-    "This app loads the Excel workbook and plots approximate fossil site locations for every entry on a map. "
-    "Hover a point to see the species and age information for that location."
+    "This app plots the main fossil sites of cats in Europe based on Madurell-Malapeira (2025). "
+    "Filters for age and species help visualise the locations of specific species at specific locations in time. "
+    "A histogram shows the relative abundance of fossil sites in time."
 )
 
 COUNTRY_COORDS = {

@@ -406,7 +406,7 @@ if not age_histogram.empty:
             width=700,
             height=300,
         )
-        .configure_view(strokeWidth=0)
+        .configure_view(strokeWidth=2, stroke="#7a4a1f")
         .configure_title(color="#000000")
         .configure_axis(
             labelColor="#000000",

@@ -2,6 +2,7 @@ import json
 import re
 from pathlib import Path
 
+import altair as alt
 import pandas as pd
 import pydeck as pdk
 import streamlit as st
@@ -387,7 +388,37 @@ if not age_histogram.empty:
         lambda value: f"{value.left:.2f}-{value.right:.2f} Ma" if pd.notna(value) else "Unknown"
     )
 
-    st.bar_chart(histogram_df.set_index("age_bin_label")["fossil_abundance"], use_container_width=True)
+    histogram_chart = (
+        alt.Chart(histogram_df)
+        .mark_bar(color="#8b5a2b", opacity=0.95)
+        .encode(
+            x=alt.X(
+                "age_bin_label:N",
+                title="Age (Ma)",
+                sort=histogram_df["age_bin_label"].tolist(),
+            ),
+            y=alt.Y("fossil_abundance:Q", title="Fossil abundance"),
+            tooltip=["age_bin_label", "fossil_abundance"],
+        )
+        .properties(
+            title=alt.TitleParams("Fossil abundance by age", color="#000000", fontSize=16),
+            background="#b8864f",
+            width=700,
+            height=300,
+        )
+        .configure_view(strokeWidth=0)
+        .configure_title(color="#000000")
+        .configure_axis(
+            labelColor="#000000",
+            titleColor="#000000",
+            gridColor="#8b5a2b",
+            domainColor="#000000",
+            tickColor="#000000",
+        )
+        .configure_axisX(labelAngle=0)
+        .configure_legend(titleColor="#000000", labelColor="#000000")
+    )
+    st.altair_chart(histogram_chart, use_container_width=True)
 else:
     st.info("No age values available for the selected histogram filter.")
 

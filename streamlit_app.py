@@ -30,6 +30,15 @@ st.markdown(
         color: #000000;
         border: 1px solid #000000;
     }
+    div[data-testid="stSelectbox"] > div {
+        background-color: #d9b38c;
+        color: #000000;
+        border: 1px solid #000000;
+    }
+    div[data-testid="stSelectbox"] > div:hover {
+        background-color: #c79d6b;
+        border: 1px solid #000000;
+    }
     </style>
     """,
     unsafe_allow_html=True,

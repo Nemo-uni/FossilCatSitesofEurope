@@ -7,6 +7,22 @@ import pydeck as pdk
 import streamlit as st
 
 st.set_page_config(page_title="Fossil Cat Sites of Europe", layout="wide")
+
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-color: #d9b38c;
+        color: #000000;
+    }
+    .stMarkdown, .stTextInput, .stSelectbox, .stButton, .stDataFrame, .stCaption, .stWarning, .stInfo {
+        color: #000000;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 st.title("🗺️ Fossil Cats in Europe")
 st.write(
     "This app loads the Excel workbook and plots approximate fossil site locations for every entry on a map. "

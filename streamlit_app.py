@@ -163,6 +163,8 @@ species_options = ["All species"] + sorted(
 )
 if "selected_species" not in st.session_state:
     st.session_state.selected_species = "All species"
+if "histogram_species" not in st.session_state:
+    st.session_state.histogram_species = "All species"
 
 st.markdown("#### Filter by species")
 for i in range(0, len(species_options), 4):
@@ -321,6 +323,48 @@ st.markdown(
     f"**Missing points:** {len(missing)}"
 )
 
+st.subheader("Fossil abundance by age")
+st.selectbox(
+    "Species for histogram",
+    options=["All species"] + sorted(
+        set(
+            str(value).strip()
+            for value in df["Species"].dropna().unique()
+            if str(value).strip()
+        )
+    ),
+    key="histogram_species",
+)
+
+histogram_data = df.copy()
+if st.session_state.histogram_species != "All species":
+    histogram_data = histogram_data[
+        histogram_data["Species"].astype(str).str.strip() == st.session_state.histogram_species
+    ]
+
+age_histogram = histogram_data["age_ma"].dropna()
+if not age_histogram.empty:
+    max_age = float(age_histogram.max())
+    bin_width = 0.5
+    bins = [0.0]
+    while bins[-1] < max_age + bin_width:
+        bins.append(bins[-1] + bin_width)
+
+    histogram_df = (
+        pd.DataFrame({"age_ma": age_histogram})
+        .assign(age_bin=lambda x: pd.cut(x["age_ma"], bins=bins, include_lowest=True))
+        .groupby("age_bin")
+        .size()
+        .reset_index(name="fossil_abundance")
+    )
+    histogram_df["age_bin_label"] = histogram_df["age_bin"].apply(
+        lambda value: f"{value.left:.2f}-{value.right:.2f} Ma" if pd.notna(value) else "Unknown"
+    )
+
+    st.bar_chart(histogram_df.set_index("age_bin_label")["fossil_abundance"], use_container_width=True)
+else:
+    st.info("No age values available for the selected histogram filter.")
+
 with st.expander("Show raw data and location status"):
     st.write(df)
 
@@ -329,3 +373,9 @@ if not missing.empty:
         "Some entries could not be assigned coordinates. The map shows all rows where latitude/longitude exist."
     )
     st.write(missing[["Species", "Location", "Age", "Figure reference number"]])
+
+st.markdown("---")
+st.caption(
+    'Madurell-Malapeira J. (2025) "A critical review of the Pliocene and Pleistocene European Felidae fossil record", '
+    'Bollettino SPI Vol. 64 (1), pp. 133-163 (doi: 10.4435/BSPI.2025.08)'
+)

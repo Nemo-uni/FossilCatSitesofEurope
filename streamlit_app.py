@@ -228,16 +228,16 @@ if "selected_species" not in st.session_state:
 if "histogram_species" not in st.session_state:
     st.session_state.histogram_species = "All species"
 
-st.markdown("#### Filter by species")
-for i in range(0, len(species_options), 4):
-    row_options = species_options[i : i + 4]
-    cols = st.columns(len(row_options))
-    for label, col in zip(row_options, cols):
-        if col.button(label, key=f"species_btn_{label}"):
+left_col, right_col = st.columns([1, 3])
+
+with left_col:
+    st.markdown("#### Filter by species")
+    for label in species_options:
+        if st.button(label, key=f"species_btn_{label}", use_container_width=True):
             st.session_state.selected_species = label
 
-selected_species = st.session_state.selected_species
-st.markdown(f"**Selected species:** {selected_species}")
+    selected_species = st.session_state.selected_species
+    st.markdown(f"**Selected species:** {selected_species}")
 
 if selected_species != "All species":
     df = df[df["Species"].astype(str).str.strip() == selected_species]
@@ -249,149 +249,150 @@ if range_bounds is not None:
 
 missing = df[df["latitude"].isna()]
 
-st.subheader("Map of fossil cat sites")
-plot_df = df[df["latitude"].notna()].copy()
-if not plot_df.empty:
-    plot_df = (
-        plot_df.groupby(["Location", "latitude", "longitude"], as_index=False)
-        .agg(
-            Species=("Species", lambda x: "<br/>".join(sorted(set(str(v).strip() for v in x if pd.notna(v))))),
-            Age=("Age", lambda x: "<br/>".join(sorted(set(str(v).strip() for v in x if pd.notna(v))))),
-        )
-    )
-    plot_df["tooltip"] = plot_df.apply(
-        lambda r: f"<b>Location:</b> {r.Location}",
-        axis=1,
-    )
-
-    tooltip = {
-        "html": "{tooltip}",
-        "style": {"backgroundColor": "#333", "color": "white", "padding": "10px", "borderRadius": "5px"},
-    }
-
-    view_state = pdk.ViewState(
-        latitude=plot_df["latitude"].mean(),
-        longitude=plot_df["longitude"].mean(),
-        zoom=3,
-        pitch=0,
-    )
-
-    layer = pdk.Layer(
-        "ScatterplotLayer",
-        data=plot_df,
-        id="fossil-site-points",
-        get_position="[longitude, latitude]",
-        get_fill_color="[255, 110, 89, 180]",
-        get_radius=16,
-        radius_units="pixels",
-        radius_min_pixels=8,
-        radius_max_pixels=24,
-        pickable=True,
-        auto_highlight=True,
-    )
-
-    def find_selected_point_payload(value):
-        if isinstance(value, dict):
-            if any(key in value for key in ("Location", "Species", "Age", "latitude", "longitude", "Latitude", "Longitude")):
-                return value
-            for nested_value in value.values():
-                found = find_selected_point_payload(nested_value)
-                if found is not None:
-                    return found
-        if isinstance(value, list):
-            for item in value:
-                found = find_selected_point_payload(item)
-                if found is not None:
-                    return found
-        return None
-
-    deck = pdk.Deck(
-        layers=[layer],
-        initial_view_state=view_state,
-        tooltip=tooltip,
-    )
-    event = st.pydeck_chart(deck, on_select="rerun", selection_mode="single-object", key="map_chart")
-
-    if event is not None and getattr(event, "selection", None) is not None:
-        selection = event.selection
-        selected_point = find_selected_point_payload(selection)
-
-        if selected_point is not None:
-            location_value = selected_point.get("Location") or selected_point.get("location") or "Unknown"
-            species_value = selected_point.get("Species") or selected_point.get("species") or ""
-            age_value = selected_point.get("Age") or selected_point.get("age") or "Unknown"
-            longitude_value = selected_point.get("Longitude")
-            if longitude_value is None:
-                longitude_value = selected_point.get("longitude")
-            latitude_value = selected_point.get("Latitude")
-            if latitude_value is None:
-                latitude_value = selected_point.get("latitude")
-
-            matching_row = None
-            if location_value != "Unknown":
-                matching_row = plot_df.loc[plot_df["Location"] == location_value]
-                if not matching_row.empty:
-                    matching_row = matching_row.iloc[0]
-
-            if matching_row is not None:
-                st.session_state.selected_point_data = {
-                    "Location": matching_row.get("Location", location_value),
-                    "Species": matching_row.get("Species", species_value),
-                    "Age": matching_row.get("Age", age_value),
-                    "longitude": matching_row.get("longitude", longitude_value),
-                    "latitude": matching_row.get("latitude", latitude_value),
-                }
-            else:
-                st.session_state.selected_point_data = {
-                    "Location": location_value,
-                    "Species": species_value,
-                    "Age": age_value,
-                    "longitude": longitude_value,
-                    "latitude": latitude_value,
-                }
-            st.session_state.show_details_dialog = True
-
-    stored_selection = st.session_state.get("selected_point_data")
-    if stored_selection is not None and st.session_state.get("show_details_dialog"):
-        selected_point_data = stored_selection
-
-        @st.dialog(f"Location: {selected_point_data.get('Location', 'Unknown')}")
-        def show_selected_location_dialog():
-            location_text = html.escape(str(selected_point_data.get("Location", "Unknown")))
-            species_text = [html.escape(line.strip()) for line in str(selected_point_data.get("Species", "")).split("<br/>") if line.strip()]
-            age_text = html.escape(str(selected_point_data.get("Age", "Unknown")))
-
-            species_html = "".join(
-                f"<li>{line}</li>" for line in species_text
-            ) or "<li>Unknown</li>"
-
-            st.markdown(
-                f"""
-                <div style="background-color:#7a4a1f; color:white; padding:12px; border-radius:8px; border:1px solid #4d2f12;">
-                    <p style="margin:0 0 6px 0;"><strong>Location:</strong> {location_text}</p>
-                    <p style="margin:0 0 6px 0;"><strong>Species:</strong></p>
-                    <ul style="margin:0 0 6px 0; padding-left:20px; color:white;">{species_html}</ul>
-                    <p style="margin:0;"><strong>Age:</strong> {age_text}</p>
-                </div>
-                """,
-                unsafe_allow_html=True,
+with right_col:
+    st.subheader("Map of fossil cat sites")
+    plot_df = df[df["latitude"].notna()].copy()
+    if not plot_df.empty:
+        plot_df = (
+            plot_df.groupby(["Location", "latitude", "longitude"], as_index=False)
+            .agg(
+                Species=("Species", lambda x: "<br/>".join(sorted(set(str(v).strip() for v in x if pd.notna(v))))),
+                Age=("Age", lambda x: "<br/>".join(sorted(set(str(v).strip() for v in x if pd.notna(v))))),
             )
+        )
+        plot_df["tooltip"] = plot_df.apply(
+            lambda r: f"<b>Location:</b> {r.Location}",
+            axis=1,
+        )
 
-        show_selected_location_dialog()
-        st.session_state.show_details_dialog = False
-else:
-    view_state = pdk.ViewState(
-        latitude=50,
-        longitude=10,
-        zoom=3,
-        pitch=0,
-    )
-    deck = pdk.Deck(
-        layers=[],
-        initial_view_state=view_state,
-    )
-    st.pydeck_chart(deck)
-    st.warning("No coordinates could be assigned from the workbook locations.")
+        tooltip = {
+            "html": "{tooltip}",
+            "style": {"backgroundColor": "#333", "color": "white", "padding": "10px", "borderRadius": "5px"},
+        }
+
+        view_state = pdk.ViewState(
+            latitude=plot_df["latitude"].mean(),
+            longitude=plot_df["longitude"].mean(),
+            zoom=3,
+            pitch=0,
+        )
+
+        layer = pdk.Layer(
+            "ScatterplotLayer",
+            data=plot_df,
+            id="fossil-site-points",
+            get_position="[longitude, latitude]",
+            get_fill_color="[255, 110, 89, 180]",
+            get_radius=16,
+            radius_units="pixels",
+            radius_min_pixels=8,
+            radius_max_pixels=24,
+            pickable=True,
+            auto_highlight=True,
+        )
+
+        def find_selected_point_payload(value):
+            if isinstance(value, dict):
+                if any(key in value for key in ("Location", "Species", "Age", "latitude", "longitude", "Latitude", "Longitude")):
+                    return value
+                for nested_value in value.values():
+                    found = find_selected_point_payload(nested_value)
+                    if found is not None:
+                        return found
+            if isinstance(value, list):
+                for item in value:
+                    found = find_selected_point_payload(item)
+                    if found is not None:
+                        return found
+            return None
+
+        deck = pdk.Deck(
+            layers=[layer],
+            initial_view_state=view_state,
+            tooltip=tooltip,
+        )
+        event = st.pydeck_chart(deck, on_select="rerun", selection_mode="single-object", key="map_chart")
+
+        if event is not None and getattr(event, "selection", None) is not None:
+            selection = event.selection
+            selected_point = find_selected_point_payload(selection)
+
+            if selected_point is not None:
+                location_value = selected_point.get("Location") or selected_point.get("location") or "Unknown"
+                species_value = selected_point.get("Species") or selected_point.get("species") or ""
+                age_value = selected_point.get("Age") or selected_point.get("age") or "Unknown"
+                longitude_value = selected_point.get("Longitude")
+                if longitude_value is None:
+                    longitude_value = selected_point.get("longitude")
+                latitude_value = selected_point.get("Latitude")
+                if latitude_value is None:
+                    latitude_value = selected_point.get("latitude")
+
+                matching_row = None
+                if location_value != "Unknown":
+                    matching_row = plot_df.loc[plot_df["Location"] == location_value]
+                    if not matching_row.empty:
+                        matching_row = matching_row.iloc[0]
+
+                if matching_row is not None:
+                    st.session_state.selected_point_data = {
+                        "Location": matching_row.get("Location", location_value),
+                        "Species": matching_row.get("Species", species_value),
+                        "Age": matching_row.get("Age", age_value),
+                        "longitude": matching_row.get("longitude", longitude_value),
+                        "latitude": matching_row.get("latitude", latitude_value),
+                    }
+                else:
+                    st.session_state.selected_point_data = {
+                        "Location": location_value,
+                        "Species": species_value,
+                        "Age": age_value,
+                        "longitude": longitude_value,
+                        "latitude": latitude_value,
+                    }
+                st.session_state.show_details_dialog = True
+
+        stored_selection = st.session_state.get("selected_point_data")
+        if stored_selection is not None and st.session_state.get("show_details_dialog"):
+            selected_point_data = stored_selection
+
+            @st.dialog(f"Location: {selected_point_data.get('Location', 'Unknown')}")
+            def show_selected_location_dialog():
+                location_text = html.escape(str(selected_point_data.get("Location", "Unknown")))
+                species_text = [html.escape(line.strip()) for line in str(selected_point_data.get("Species", "")).split("<br/>") if line.strip()]
+                age_text = html.escape(str(selected_point_data.get("Age", "Unknown")))
+
+                species_html = "".join(
+                    f"<li>{line}</li>" for line in species_text
+                ) or "<li>Unknown</li>"
+
+                st.markdown(
+                    f"""
+                    <div style="background-color:#7a4a1f; color:white; padding:12px; border-radius:8px; border:1px solid #4d2f12;">
+                        <p style="margin:0 0 6px 0;"><strong>Location:</strong> {location_text}</p>
+                        <p style="margin:0 0 6px 0;"><strong>Species:</strong></p>
+                        <ul style="margin:0 0 6px 0; padding-left:20px; color:white;">{species_html}</ul>
+                        <p style="margin:0;"><strong>Age:</strong> {age_text}</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            show_selected_location_dialog()
+            st.session_state.show_details_dialog = False
+    else:
+        view_state = pdk.ViewState(
+            latitude=50,
+            longitude=10,
+            zoom=3,
+            pitch=0,
+        )
+        deck = pdk.Deck(
+            layers=[],
+            initial_view_state=view_state,
+        )
+        st.pydeck_chart(deck)
+        st.warning("No coordinates could be assigned from the workbook locations.")
 
 st.markdown(
     f"**Total rows:** {len(df)}  \\"

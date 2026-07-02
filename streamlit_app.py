@@ -1,3 +1,4 @@
+import html
 import json
 import re
 from pathlib import Path
@@ -322,11 +323,25 @@ if not plot_df.empty:
 
         @st.dialog(f"Location: {selected_point_data.get('Location', 'Unknown')}")
         def show_selected_location_dialog():
-            st.write(f"**Location:** {selected_point_data.get('Location', 'Unknown')}")
-            st.write("**Species:**")
-            for line in [line.strip() for line in str(selected_point_data.get("Species", "")).split("<br/>") if line.strip()]:
-                st.write(f"- {line}")
-            st.write(f"**Age:** {selected_point_data.get('Age', 'Unknown')}")
+            location_text = html.escape(str(selected_point_data.get("Location", "Unknown")))
+            species_text = [html.escape(line.strip()) for line in str(selected_point_data.get("Species", "")).split("<br/>") if line.strip()]
+            age_text = html.escape(str(selected_point_data.get("Age", "Unknown")))
+
+            species_html = "".join(
+                f"<li>{line}</li>" for line in species_text
+            ) or "<li>Unknown</li>"
+
+            st.markdown(
+                f"""
+                <div style="background-color:#7a4a1f; color:white; padding:12px; border-radius:8px; border:1px solid #4d2f12;">
+                    <p style="margin:0 0 6px 0;"><strong>Location:</strong> {location_text}</p>
+                    <p style="margin:0 0 6px 0;"><strong>Species:</strong></p>
+                    <ul style="margin:0 0 6px 0; padding-left:20px; color:white;">{species_html}</ul>
+                    <p style="margin:0;"><strong>Age:</strong> {age_text}</p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
         show_selected_location_dialog()
         st.session_state.show_details_dialog = False

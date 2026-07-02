@@ -39,6 +39,25 @@ st.markdown(
         background-color: #c79d6b;
         border: 1px solid #000000;
     }
+    div[data-testid="stSelectbox"] [data-baseweb="select"] {
+        background-color: #d9b38c;
+        color: #000000;
+    }
+    div[data-testid="stSelectbox"] [data-baseweb="select"] > div {
+        background-color: #d9b38c;
+        color: #000000;
+    }
+    div[data-testid="stSelectbox"] [data-baseweb="select"] span {
+        color: #000000;
+    }
+    div[data-testid="stSelectbox"] [data-baseweb="menu"] {
+        background-color: #d9b38c;
+        color: #000000;
+    }
+    div[data-testid="stSelectbox"] [data-baseweb="menu"] div {
+        background-color: #d9b38c;
+        color: #000000;
+    }
     </style>
     """,
     unsafe_allow_html=True,

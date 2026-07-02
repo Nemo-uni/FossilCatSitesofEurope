@@ -224,6 +224,21 @@ if not plot_df.empty:
         auto_highlight=True,
     )
 
+    def find_selected_point_payload(value):
+        if isinstance(value, dict):
+            if any(key in value for key in ("Location", "Species", "Age", "latitude", "longitude", "Latitude", "Longitude")):
+                return value
+            for nested_value in value.values():
+                found = find_selected_point_payload(nested_value)
+                if found is not None:
+                    return found
+        if isinstance(value, list):
+            for item in value:
+                found = find_selected_point_payload(item)
+                if found is not None:
+                    return found
+        return None
+
     def build_popup_layer(selected_point_data):
         species_lines = [line.strip() for line in str(selected_point_data.get("Species", "")).split("<br/>") if line.strip()]
         lines = [f"Location: {selected_point_data.get('Location', 'Unknown')}"]
@@ -262,14 +277,8 @@ if not plot_df.empty:
             get_background_padding="[6, 6]",
         )
 
-    stored_selection = st.session_state.get("selected_point_data")
-    layers = [layer]
-    if stored_selection is not None:
-        popup_layer = build_popup_layer(stored_selection)
-        layers.append(popup_layer)
-
     deck = pdk.Deck(
-        layers=layers,
+        layers=[layer],
         initial_view_state=view_state,
         tooltip=tooltip,
     )
@@ -277,35 +286,61 @@ if not plot_df.empty:
 
     if event is not None and getattr(event, "selection", None) is not None:
         selection = event.selection
-        objects = selection.get("objects", {}) if isinstance(selection, dict) else {}
-        selected_point = None
-        for layer_id, object_list in objects.items():
-            if layer_id == "fossil-site-points" and object_list:
-                selected_point = object_list[0]
-                break
-
-        if selected_point is None and isinstance(selection, dict):
-            object_list = selection.get("object", [])
-            if object_list:
-                selected_point = object_list[0]
+        selected_point = find_selected_point_payload(selection)
 
         if selected_point is not None:
-            st.session_state.selected_point_data = {
-                "Location": selected_point.get("Location", "Unknown"),
-                "Species": selected_point.get("Species", ""),
-                "Age": selected_point.get("Age", "Unknown"),
-                "longitude": selected_point.get("Longitude", selected_point.get("longitude")),
-                "latitude": selected_point.get("Latitude", selected_point.get("latitude")),
-            }
+            location_value = selected_point.get("Location") or selected_point.get("location") or "Unknown"
+            species_value = selected_point.get("Species") or selected_point.get("species") or ""
+            age_value = selected_point.get("Age") or selected_point.get("age") or "Unknown"
+            longitude_value = selected_point.get("Longitude")
+            if longitude_value is None:
+                longitude_value = selected_point.get("longitude")
+            latitude_value = selected_point.get("Latitude")
+            if latitude_value is None:
+                latitude_value = selected_point.get("latitude")
 
-    if st.session_state.get("selected_point_data") is not None:
-        selected_point_data = st.session_state["selected_point_data"]
+            matching_row = None
+            if location_value != "Unknown":
+                matching_row = plot_df.loc[plot_df["Location"] == location_value]
+                if not matching_row.empty:
+                    matching_row = matching_row.iloc[0]
+
+            if matching_row is not None:
+                st.session_state.selected_point_data = {
+                    "Location": matching_row.get("Location", location_value),
+                    "Species": matching_row.get("Species", species_value),
+                    "Age": matching_row.get("Age", age_value),
+                    "longitude": matching_row.get("longitude", longitude_value),
+                    "latitude": matching_row.get("latitude", latitude_value),
+                }
+            else:
+                st.session_state.selected_point_data = {
+                    "Location": location_value,
+                    "Species": species_value,
+                    "Age": age_value,
+                    "longitude": longitude_value,
+                    "latitude": latitude_value,
+                }
+
+    stored_selection = st.session_state.get("selected_point_data")
+    if stored_selection is not None:
+        popup_layer = build_popup_layer(stored_selection)
+        deck = pdk.Deck(
+            layers=[layer, popup_layer],
+            initial_view_state=view_state,
+            tooltip=tooltip,
+        )
+        st.pydeck_chart(deck, on_select="rerun", selection_mode="single-object", key="map_chart_popup")
+
+        selected_point_data = stored_selection
         st.markdown("#### Selected location details")
         st.write("**Location:**", selected_point_data.get("Location", "Unknown"))
         st.write("**Species:**")
         for line in [line.strip() for line in str(selected_point_data.get("Species", "")).split("<br/>") if line.strip()]:
             st.write(f"- {line}")
         st.write("**Age:**", selected_point_data.get("Age", "Unknown"))
+    else:
+        st.pydeck_chart(deck, on_select="rerun", selection_mode="single-object", key="map_chart_popup")
 else:
     view_state = pdk.ViewState(
         latitude=50,

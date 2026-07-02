@@ -142,6 +142,8 @@ age_options = [
 ]
 if "selected_age" not in st.session_state:
     st.session_state.selected_age = "All ages"
+if "show_details_dialog" not in st.session_state:
+    st.session_state.show_details_dialog = False
 
 st.markdown("#### Filter by age range")
 cols = st.columns(len(age_options))
@@ -239,44 +241,6 @@ if not plot_df.empty:
                     return found
         return None
 
-    def build_popup_layer(selected_point_data):
-        species_lines = [line.strip() for line in str(selected_point_data.get("Species", "")).split("<br/>") if line.strip()]
-        lines = [f"Location: {selected_point_data.get('Location', 'Unknown')}"]
-        if species_lines:
-            lines.append("Species:")
-            lines.extend([f"- {line}" for line in species_lines])
-        else:
-            lines.append("Species: Unknown")
-        lines.append(f"Age: {selected_point_data.get('Age', 'Unknown')}")
-
-        base_latitude = selected_point_data.get("latitude", 0.0)
-        line_spacing = 0.0004
-        selected_point_data_rows = []
-        for index, text_line in enumerate(lines):
-            selected_point_data_rows.append(
-                {
-                    "longitude": selected_point_data.get("longitude"),
-                    "latitude": base_latitude + line_spacing * (len(lines) - index),
-                    "popup_text": text_line,
-                }
-            )
-
-        return pdk.Layer(
-            "TextLayer",
-            data=selected_point_data_rows,
-            id="fossil-site-popup",
-            get_position="[longitude, latitude]",
-            get_text="popup_text",
-            get_size=16,
-            size_units="pixels",
-            get_color="[255, 255, 255, 255]",
-            get_text_anchor="middle",
-            get_alignment_baseline="bottom",
-            background=True,
-            get_background_color="[20, 20, 20, 220]",
-            get_background_padding="[6, 6]",
-        )
-
     deck = pdk.Deck(
         layers=[layer],
         initial_view_state=view_state,
@@ -321,26 +285,22 @@ if not plot_df.empty:
                     "longitude": longitude_value,
                     "latitude": latitude_value,
                 }
+            st.session_state.show_details_dialog = True
 
     stored_selection = st.session_state.get("selected_point_data")
-    if stored_selection is not None:
-        popup_layer = build_popup_layer(stored_selection)
-        deck = pdk.Deck(
-            layers=[layer, popup_layer],
-            initial_view_state=view_state,
-            tooltip=tooltip,
-        )
-        st.pydeck_chart(deck, on_select="rerun", selection_mode="single-object", key="map_chart_popup")
-
+    if stored_selection is not None and st.session_state.get("show_details_dialog"):
         selected_point_data = stored_selection
-        st.markdown("#### Selected location details")
-        st.write("**Location:**", selected_point_data.get("Location", "Unknown"))
-        st.write("**Species:**")
-        for line in [line.strip() for line in str(selected_point_data.get("Species", "")).split("<br/>") if line.strip()]:
-            st.write(f"- {line}")
-        st.write("**Age:**", selected_point_data.get("Age", "Unknown"))
-    else:
-        st.pydeck_chart(deck, on_select="rerun", selection_mode="single-object", key="map_chart_popup")
+
+        @st.dialog(f"Location: {selected_point_data.get('Location', 'Unknown')}")
+        def show_selected_location_dialog():
+            st.write(f"**Location:** {selected_point_data.get('Location', 'Unknown')}")
+            st.write("**Species:**")
+            for line in [line.strip() for line in str(selected_point_data.get("Species", "")).split("<br/>") if line.strip()]:
+                st.write(f"- {line}")
+            st.write(f"**Age:** {selected_point_data.get('Age', 'Unknown')}")
+
+        show_selected_location_dialog()
+        st.session_state.show_details_dialog = False
 else:
     view_state = pdk.ViewState(
         latitude=50,

@@ -76,6 +76,44 @@ st.write(
     "A histogram shows the relative abundance of fossil sites in time."
 )
 
+
+def render_species_description_gallery(selected_species: str) -> None:
+    st.subheader("Species descriptions from the PDF")
+    st.caption("The figure references are taken from the PDF notes in the repository.")
+
+    if selected_species != "All species":
+        matching_entries = [entry for entry in SPECIES_DESCRIPTION_DATA if entry["species"].lower() == selected_species.lower()]
+    else:
+        matching_entries = SPECIES_DESCRIPTION_DATA
+
+    if not matching_entries:
+        st.info("No PDF species description is available for the current selection.")
+        return
+
+    for entry in matching_entries:
+        figure_labels = []
+        for figure_number in entry["figures"]:
+            image_path = Path("Immagini") / f"Fig {figure_number}.jpg"
+            if image_path.exists():
+                figure_labels.append(f"Fig. {figure_number}")
+            else:
+                figure_labels.append(f"Fig. {figure_number} (image not available)")
+
+        cols = st.columns([1, 2])
+        with cols[0]:
+            if entry["figures"]:
+                first_figure = entry["figures"][0]
+                image_path = Path("Immagini") / f"Fig {first_figure}.jpg"
+                if image_path.exists():
+                    st.image(str(image_path), use_container_width=True)
+                else:
+                    st.info(f"No image available for {entry['species']}.")
+        with cols[1]:
+            st.markdown(f"**{' / '.join(figure_labels)} — {entry['species']}**")
+            st.write(entry["description"])
+        st.markdown("---")
+
+
 COUNTRY_COORDS = {
     "France": (46.603354, 1.888334),
     "Italy": (41.87194, 12.56738),
@@ -92,6 +130,59 @@ COUNTRY_COORDS = {
     "Bosnia and Herzegovina": (43.915886, 17.679076),
     "Crimea": (45.1739773, 33.336804),
 }
+
+SPECIES_DESCRIPTION_DATA = [
+    {
+        "figures": ["1"],
+        "species": "Homotherium crenatidens",
+        "description": "An extinct scimitar-toothed cat that lived in the Plio-Pleistocene of Eurasia. It was a long-legged, cursorial predator with flattened, serrated upper canines adapted for slicing prey, and it is one of the earliest known Homotherium species in Europe.",
+    },
+    {
+        "figures": ["2"],
+        "species": "Panthera gombaszoegensis",
+        "description": "An extinct large cat that lived in Europe and western Asia during the Pleistocene. It was a large, robust predator that likely hunted medium to large prey such as deer and wild boar, and it disappeared by the middle Pleistocene.",
+    },
+    {
+        "figures": ["3"],
+        "species": "Dinofelis diastemata",
+        "description": "An extinct saber-toothed cat from Europe, known from the Miocene to Pliocene. It was a leopard-sized predator with relatively long, laterally compressed upper canines and was probably an ambush predator that hunted medium-sized animals.",
+    },
+    {
+        "figures": ["4"],
+        "species": "Megantereon cultridens",
+        "description": "An extinct saber-toothed cat from the Pliocene and early Pleistocene, characterised by short, robust limbs, a short tail, and a long, muscular neck. It was typically interpreted as a woodland ambush predator that likely hunted medium to large prey.",
+    },
+    {
+        "figures": ["5"],
+        "species": "Viretailurus pardoides",
+        "description": "A medium-sized felid, probably similar in build to a modern puma. It is known from rare remains across Europe and western Asia, and its anatomy, ecology, and taxonomic position remain poorly understood because the fossil record is very sparse.",
+    },
+    {
+        "figures": ["6"],
+        "species": "Panthera pardus",
+        "description": "The leopard, a large cat found across parts of Africa and Asia. The fossil history of European leopards remains less understood than other species, but it can be assumed that fossil leopards behaved similarly to living representatives as solitary predators and skilled climbers.",
+    },
+    {
+        "figures": ["7"],
+        "species": "Acinonyx pardinensis",
+        "description": "An extinct felid that lived in Eurasia during the Pliocene and early Pleistocene. It was closely related to the modern cheetah but reached larger dimensions and was probably adapted for running, although possibly less specialised for extreme speed than living cheetahs.",
+    },
+    {
+        "figures": ["8"],
+        "species": "Panthera uncia",
+        "description": "The snow leopard, a large wild cat native to the high mountains of Central and South Asia. Its possible presence in Europe has been debated, but it was likely adapted to cold, rugged terrain and to hunting mountain-dwelling prey in rocky environments.",
+    },
+    {
+        "figures": ["9", "10"],
+        "species": "Lynx issiodorensis",
+        "description": "An extinct lynx from the late Pliocene to Pleistocene, often called the Issoire lynx. It is widely considered to be the ancestor of modern lynxes and probably acted as a generalist predator of small to medium prey.",
+    },
+    {
+        "figures": ["11"],
+        "species": "Felis silvestris",
+        "description": "The European wildcat, whose fossil record is extremely scarce and not well understood. The living species is highly adaptable and occupies a wide range of habitats, but its fossil ecology and habitat preferences remain uncertain.",
+    },
+]
 
 LOCATION_COORDS_FILE = Path("location_coords.json")
 
@@ -288,6 +379,7 @@ with left_col:
 
     selected_species = st.session_state.selected_species
     st.markdown(f"**Selected species:** {selected_species}")
+    render_species_description_gallery(selected_species)
 
 if selected_species != "All species":
     df = df[df["Species"].astype(str).str.strip() == selected_species]
@@ -361,8 +453,9 @@ with right_col:
             initial_view_state=view_state,
             tooltip=tooltip,
             height=500,
+            width=800,
         )
-        event = st.pydeck_chart(deck, on_select="rerun", selection_mode="single-object", key="map_chart", use_container_width=True)
+        event = st.pydeck_chart(deck, on_select="rerun", selection_mode="single-object", key="map_chart")
 
         if event is not None and getattr(event, "selection", None) is not None:
             selection = event.selection
@@ -442,8 +535,9 @@ with right_col:
             layers=[],
             initial_view_state=view_state,
             height=500,
+            width=800,
         )
-        st.pydeck_chart(deck, use_container_width=True)
+        st.pydeck_chart(deck)
         st.warning("No coordinates could be assigned from the workbook locations.")
 
 st.markdown(

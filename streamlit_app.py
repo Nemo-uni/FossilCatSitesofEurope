@@ -94,6 +94,19 @@ COUNTRY_COORDS = {
     "Crimea": (45.1739773, 33.336804),
 }
 
+SPECIES_DESCRIPTIONS = {
+    "homotherium crenatidens": "Homotherium crenatidens was a long-legged scimitar-toothed cat of the Plio-Pleistocene, with flattened serrated upper canines adapted for slicing prey.",
+    "panthera gombazoegensis": "Panthera gombazoegensis was a large, robust European and western Asian cat of the Pleistocene, probably hunting medium to large prey before disappearing by the middle Pleistocene.",
+    "dinofelis diastemata": "Dinofelis diastemata was a leopard-sized saber-toothed cat from Europe, likely an ambush predator with long, laterally compressed upper canines.",
+    "megantereon cultridens": "Megantereon cultridens was a short-limbed saber-toothed cat of the Pliocene and early Pleistocene, often interpreted as a woodland ambush predator.",
+    "viretailurus pardoides": "Viretailurus pardoides was a medium-sized felid, probably similar to a modern puma, but its fossil record is too sparse to fully resolve its anatomy and ecology.",
+    "panthera pardus": "Panthera pardus was the leopard, a versatile predator that likely lived much like modern leopards in Europe, where its fossil record is fragmentary.",
+    "acinonyx pardinensis": "Acinonyx pardinensis was an extinct Eurasian felid closely related to the modern cheetah, adapted for running and probably hunting medium-sized prey.",
+    "panthera uncia": "Panthera uncia was the snow leopard, a cold-adapted mountain predator whose presence in Europe is debated but likely linked to rocky upland environments.",
+    "lynx issiodorensis": "Lynx issiodorensis was an extinct lynx of the late Pliocene to Pleistocene, considered the ancestor of modern lynxes and probably a generalist predator.",
+    "felis silvestris": "Felis silvestris was the European wildcat, a highly adaptable predator whose fossil record is scarce and poorly understood.",
+}
+
 LOCATION_COORDS_FILE = Path("location_coords.json")
 
 
@@ -103,6 +116,19 @@ def normalize_location(location: str) -> str:
     clean = location.replace("’", "'").replace("“", '"').replace("”", '"')
     clean = re.sub(r"\s+", " ", clean)
     return clean.strip()
+
+
+def normalize_species_name(species: str) -> str:
+    if not isinstance(species, str):
+        return ""
+    cleaned = re.sub(r"\s*\([^)]*\)\s*$", "", species)
+    cleaned = cleaned.replace("’", "'").replace("“", '"').replace("”", '"')
+    cleaned = re.sub(r"\s+", " ", cleaned).strip().lower()
+    return cleaned
+
+
+def get_species_description(species: str) -> str | None:
+    return SPECIES_DESCRIPTIONS.get(normalize_species_name(species))
 
 
 def load_location_coords() -> dict[str, tuple[float, float]]:
@@ -455,12 +481,16 @@ st.markdown(
     f"**Missing points:** {len(missing)}"
 )
 
-# Display figures associated with selected species
+# Display figures and descriptions only after a species has been chosen from the species buttons
 if selected_species != "All species":
     figure_numbers = get_figures_for_species(df_full, selected_species)
-    if figure_numbers:
-        st.subheader(f"Figures for {selected_species}")
-        display_figures(figure_numbers)
+    description = get_species_description(selected_species)
+    if figure_numbers or description:
+        st.subheader(f"Figures and description for {selected_species}")
+        if description:
+            st.write(description)
+        if figure_numbers:
+            display_figures(figure_numbers)
 
 st.subheader("Fossil abundance by age")
 st.selectbox(

@@ -135,52 +135,52 @@ SPECIES_DESCRIPTION_DATA = [
     {
         "figures": ["1"],
         "species": "Homotherium crenatidens",
-        "description": "An extinct scimitar-toothed cat that lived in the Plio-Pleistocene of Eurasia. It was a long-legged, cursorial predator with flattened, serrated upper canines adapted for slicing prey, and it is one of the earliest known Homotherium species in Europe.",
+        "description": "Homotherium crenatidens (Fabrini, 1890) is an extinct scimitar-toothed cat that lived during the Plio-Pleistocene of Eurasia and was a long-legged, cursorial predator with flattened, serrated upper canines adapted for slicing prey. It is one of the earliest known Homotherium species in Europe, appearing in the late Pliocene, and is part of a lineage that later spread widely across Africa, Eurasia, and North America.",
     },
     {
         "figures": ["2"],
         "species": "Panthera gombaszoegensis",
-        "description": "An extinct large cat that lived in Europe and western Asia during the Pleistocene. It was a large, robust predator that likely hunted medium to large prey such as deer and wild boar, and it disappeared by the middle Pleistocene.",
+        "description": "Panthera gombaszoegensis (Kretzoi, 1938) is an extinct large cat that lived in Europe and western Asia during the Pleistocene. It was a large, robust predator. It probably hunted medium to large prey such as deer and wild boar, and it disappeared by the middle Pleistocene. The morphology of specimens traditionally assigned to P. gombaszoegensis are more closely related to the ancestral Asian pantherine lineage, currently represented by P. tigris and P. uncia Schreber, 1775, rather than resembling tigers specifically.",
     },
     {
         "figures": ["3"],
         "species": "Dinofelis diastemata",
-        "description": "An extinct saber-toothed cat from Europe, known from the Miocene to Pliocene. It was a leopard-sized predator with relatively long, laterally compressed upper canines and was probably an ambush predator that hunted medium-sized animals.",
+        "description": "Dinofelis diastemata (Astre, 1929) is an extinct saber-toothed cat from Europe, known from the Miocene to Pliocene. These cat-like predators were generally about leopard-sized and had relatively long, laterally compressed upper canines. They were likely a scansorial, ambush predator that hunted medium-sized animals.",
     },
     {
         "figures": ["4"],
         "species": "Megantereon cultridens",
-        "description": "An extinct saber-toothed cat from the Pliocene and early Pleistocene, characterised by short, robust limbs, a short tail, and a long, muscular neck. It was typically interpreted as a woodland ambush predator that likely hunted medium to large prey.",
+        "description": "Megantereon cultridens was an extinct saber-toothed cat from the Pliocene and early Pleistocene, found in Africa, Eurasia, and North America. It was characterised by short, robust limbs, a short tail, and a long, muscular neck (Antón, 2013). In palaeontological literature, Megantereon is typically described as inhabiting wooded environments and as an ambush predator. It likely hunted medium to large prey.",
     },
     {
         "figures": ["5"],
         "species": "Viretailurus pardoides",
-        "description": "A medium-sized felid, probably similar in build to a modern puma. It is known from rare remains across Europe and western Asia, and its anatomy, ecology, and taxonomic position remain poorly understood because the fossil record is very sparse.",
+        "description": "Viretailurus pardoides (Owen, 1846) was a medium-sized felid, probably similar in build to a modern puma, and is known from remains found across Europe and parts of western Asia. Eurasian puma-like cats are exceedingly rare in the fossil record, represented by only one cranium and a few postcranial bones. Consequently, their anatomy and ecology remain poorly understood, and their taxonomic classification is a subject of considerable debate (Hemmer & Kahlke, 2022).",
     },
     {
         "figures": ["6"],
         "species": "Panthera pardus",
-        "description": "The leopard, a large cat found across parts of Africa and Asia. The fossil history of European leopards remains less understood than other species, but it can be assumed that fossil leopards behaved similarly to living representatives as solitary predators and skilled climbers.",
+        "description": "Panthera pardus (Linnaeus, 1758) is the leopard, a large cat found across parts of Africa and Asia. It is the smallest of the big cats in the genus Panthera, known for its spotted coat, powerful build, and highly versatile hunting habits. Despite two centuries of research, the paleontological history of European leopards remains less understood than other species commonly found in Late Pleistocene karstic environments. One primary reason for this knowledge gap is the scarcity and fragmentary nature of leopard fossils across Europe. However, it can be assumed that the fossil Leopards lived similarly to the modern representatives, as solitary predators and excellent climbers, that can thrive in forests, savannas and mountains.",
     },
     {
         "figures": ["7"],
         "species": "Acinonyx pardinensis",
-        "description": "An extinct felid that lived in Eurasia during the Pliocene and early Pleistocene. It was closely related to the modern cheetah but reached larger dimensions and was probably adapted for running, although possibly less specialised for extreme speed than living cheetahs.",
+        "description": "Acinonyx pardinensis is an extinct felid that lived in Eurasia during the Pliocene and early Pleistocene. It is closely related to the modern cheetah but reached larger dimensions, being about twice the size of the modern cheetahs. Still, this animal was adapted for running, though some studies suggest it may have been less specialized for extreme speed than the living species. It likely hunted medium-sized prey and occupied a predator role somewhat similar to a cheetah's, but with a more robust skull and body.",
     },
     {
         "figures": ["8"],
         "species": "Panthera uncia",
-        "description": "The snow leopard, a large wild cat native to the high mountains of Central and South Asia. Its possible presence in Europe has been debated, but it was likely adapted to cold, rugged terrain and to hunting mountain-dwelling prey in rocky environments.",
+        "description": "Panthera uncia (Schreber, 1775) is the snow leopard, a large wild cat native today to the high mountains of Central and South Asia. The possible presence of snow leopard remains in Europe has been a topic of intense debate over the past decades. The first mention of potential snow leopard traits in a Panthera pardus sample was made by Nagel in 1999 in her description of leopard remains from Vraona, Greece. The environmental requirements of Middle to Late Pleistocene European snow leopards were similar to those of the extant species, which inhabit mountainous rocky environments. Today it has thick pale fur, a long tail for balance and warmth, and is adapted to cold, rugged terrain. It is a solitary predator that mainly hunts mountain-dwelling prey such as ibex and bharal. The species is currently classified as endangered.",
     },
     {
         "figures": ["9", "10"],
         "species": "Lynx issiodorensis",
-        "description": "An extinct lynx from the late Pliocene to Pleistocene, often called the Issoire lynx. It is widely considered to be the ancestor of modern lynxes and probably acted as a generalist predator of small to medium prey.",
+        "description": "Lynx issiodorensis (Croizet & Jobert, 1828) is an extinct lynx from the late Pliocene to Pleistocene, often called the Issoire lynx. It is widely considered to be the ancestor of the modern lynxes, and its fossils have been found across Europe, Asia, and even North America and Africa. Compared with living lynxes, it had a longer body, shorter and more robust limbs, a larger head, and a longer neck. It was probably a generalist predator of small to medium prey.",
     },
     {
         "figures": ["11"],
         "species": "Felis silvestris",
-        "description": "The European wildcat, whose fossil record is extremely scarce and not well understood. The living species is highly adaptable and occupies a wide range of habitats, but its fossil ecology and habitat preferences remain uncertain.",
+        "description": "Felis silvestris (Schreber, 1777) is the European wildcat. The fossil record of European wild cats is extremely scarce and not well understood. No detailed studies on the ecology and habitat preferences of fossil European wild cats were performed up to now, and their palaeobiology was always assumed equal to extant forms. The living species is a highly adaptable taxon occupying a wide range of habitats, including forests, grasslands, and shrublands. Its morphology, characterised by a robust build, sharp retractable claws, and keen senses, enables it to prey on small mammals, birds, and insects. The ecological niche of Felis silvestris includes areas with dense vegetation for cover and open spaces for hunting.",
     },
 ]
 

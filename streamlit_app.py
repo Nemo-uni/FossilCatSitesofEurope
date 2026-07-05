@@ -192,7 +192,56 @@ def age_range_label_to_bounds(label: str) -> tuple[float, float] | None:
         return None
 
 
+def extract_figure_numbers(figure_ref: str) -> set[int]:
+    """Extract figure numbers from a figure reference string like 'Fig. 1a, g' or 'Fig. 2d'."""
+    if not isinstance(figure_ref, str) or not figure_ref.strip():
+        return set()
+    
+    # Find all occurrences of "Fig. " followed by a number
+    figure_numbers = set()
+    matches = re.finditer(r'Fig\.\s*(\d+)', figure_ref, re.IGNORECASE)
+    for match in matches:
+        try:
+            fig_num = int(match.group(1))
+            figure_numbers.add(fig_num)
+        except ValueError:
+            pass
+    
+    return figure_numbers
+
+
+def get_figures_for_species(df_full: pd.DataFrame, species: str) -> set[int]:
+    """Get all figure numbers associated with a specific species."""
+    if species == "All species":
+        return set()
+    
+    species_data = df_full[df_full["Species"].astype(str).str.strip() == species]
+    figure_numbers = set()
+    
+    for fig_ref in species_data["Figure reference number"].dropna():
+        figure_numbers.update(extract_figure_numbers(str(fig_ref)))
+    
+    return sorted(figure_numbers)
+
+
+def display_figures(figure_numbers: list[int], images_dir: Path = Path("Immagini")) -> None:
+    """Display figures as a grid of images."""
+    if not figure_numbers:
+        return
+    
+    # Create columns for displaying images
+    cols_per_row = 3
+    for i in range(0, len(figure_numbers), cols_per_row):
+        cols = st.columns(cols_per_row)
+        for col_idx, fig_num in enumerate(figure_numbers[i:i+cols_per_row]):
+            fig_path = images_dir / f"Fig {fig_num}.jpg"
+            if fig_path.exists():
+                with cols[col_idx]:
+                    st.image(str(fig_path), use_container_width=True)
+
+
 df = load_data()
+df_full = df.copy()  # Keep a copy of full data for figure extraction
 df["age_ma"] = df["Age"].apply(parse_age)
 
 age_options = [
@@ -401,6 +450,13 @@ st.markdown(
     f"**Missing points:** {len(missing)}"
 )
 
+# Display figures associated with selected species
+if selected_species != "All species":
+    figure_numbers = get_figures_for_species(df_full, selected_species)
+    if figure_numbers:
+        st.subheader(f"Figures for {selected_species}")
+        display_figures(figure_numbers)
+
 st.subheader("Fossil abundance by age")
 st.selectbox(
     "Species for histogram",
@@ -435,6 +491,14 @@ if not age_histogram.empty:
         .size()
         .reset_index(name="fossil_abundance")
     )
+    
+    # Ensure all bins are included, even if empty
+    all_bins = pd.IntervalIndex.from_breaks(bins, closed='right')
+    all_bins_df = pd.DataFrame({"age_bin": all_bins})
+    histogram_df = histogram_df.merge(all_bins_df, on="age_bin", how="right")
+    histogram_df["fossil_abundance"] = histogram_df["fossil_abundance"].fillna(0).astype(int)
+    histogram_df = histogram_df.sort_values("age_bin").reset_index(drop=True)
+    
     histogram_df["age_bin_label"] = histogram_df["age_bin"].apply(
         lambda value: f"{value.left:.2f}-{value.right:.2f} Ma" if pd.notna(value) else "Unknown"
     )

@@ -360,8 +360,9 @@ with right_col:
             layers=[layer],
             initial_view_state=view_state,
             tooltip=tooltip,
+            height=500,
         )
-        event = st.pydeck_chart(deck, on_select="rerun", selection_mode="single-object", key="map_chart")
+        event = st.pydeck_chart(deck, on_select="rerun", selection_mode="single-object", key="map_chart", use_container_width=True)
 
         if event is not None and getattr(event, "selection", None) is not None:
             selection = event.selection
@@ -440,8 +441,9 @@ with right_col:
         deck = pdk.Deck(
             layers=[],
             initial_view_state=view_state,
+            height=500,
         )
-        st.pydeck_chart(deck)
+        st.pydeck_chart(deck, use_container_width=True)
         st.warning("No coordinates could be assigned from the workbook locations.")
 
 st.markdown(

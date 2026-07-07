@@ -108,6 +108,40 @@ SPECIES_DESCRIPTIONS = {
 }
 
 LOCATION_COORDS_FILE = Path("location_coords.json")
+DESCRIPTIONS_FILE = Path("Descriptions.xlsx")
+
+
+@st.cache_data
+def load_descriptions() -> dict[int, str]:
+    """Load figure descriptions from the Descriptions.xlsx file."""
+    if not DESCRIPTIONS_FILE.exists():
+        return {}
+    
+    try:
+        df = pd.read_excel(DESCRIPTIONS_FILE)
+        descriptions = {}
+        
+        for _, row in df.iterrows():
+            figure_col = row.get("Figure") or row.get("figure")
+            description_col = row.get("Description") or row.get("description")
+            
+            if pd.notna(figure_col) and pd.notna(description_col):
+                figure_text = str(figure_col).strip()
+                # Extract figure number from "Fig. X" format
+                match = re.search(r'Fig\.\s*(\d+)', figure_text, re.IGNORECASE)
+                if match:
+                    fig_num = int(match.group(1))
+                    descriptions[fig_num] = str(description_col).strip()
+        
+        return descriptions
+    except Exception as e:
+        st.warning(f"Could not load descriptions file: {e}")
+        return {}
+
+
+def get_figure_description(fig_num: int, figure_descriptions: dict[int, str]) -> str | None:
+    """Get the description for a specific figure number."""
+    return figure_descriptions.get(fig_num)
 
 
 def normalize_location(location: str) -> str:
@@ -251,25 +285,33 @@ def get_figures_for_species(df_full: pd.DataFrame, species: str) -> set[int]:
     return sorted(figure_numbers)
 
 
-def display_figures(figure_numbers: list[int], images_dir: Path = Path("Immagini")) -> None:
-    """Display figures as a grid of images."""
+def display_figures(figure_numbers: list[int], figure_descriptions: dict[int, str], images_dir: Path = Path("Immagini")) -> None:
+    """Display figures as a grid of images with descriptions side by side."""
     if not figure_numbers:
         return
     
-    # Create columns for displaying images
-    cols_per_row = 3
-    for i in range(0, len(figure_numbers), cols_per_row):
-        cols = st.columns(cols_per_row)
-        for col_idx, fig_num in enumerate(figure_numbers[i:i+cols_per_row]):
-            fig_path = images_dir / f"Fig {fig_num}.jpg"
-            if fig_path.exists():
-                with cols[col_idx]:
-                    st.image(str(fig_path), use_container_width=True)
+    for fig_num in figure_numbers:
+        fig_path = images_dir / f"Fig {fig_num}.jpg"
+        description = get_figure_description(fig_num, figure_descriptions)
+        
+        if fig_path.exists() or description:
+            # Create two columns: one for image, one for description
+            col_image, col_description = st.columns([1, 1.2])
+            
+            with col_image:
+                if fig_path.exists():
+                    st.image(str(fig_path), use_container_width=True, caption=f"Figure {fig_num}")
+            
+            with col_description:
+                if description:
+                    st.markdown(f"**Figure {fig_num}**")
+                    st.write(description)
 
 
 df = load_data()
 df_full = df.copy()  # Keep a copy of full data for figure extraction
 df["age_ma"] = df["Age"].apply(parse_age)
+figure_descriptions = load_descriptions()
 
 age_options = [
     "All ages",
